@@ -1,10 +1,10 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <iomanip>
-#include <vector>
-#include <ctime>
-#include <sstream>
+#include <iostream> // for cin and cout
+#include <fstream>  // for file handling
+#include <string>  // for string data 
+#include <iomanip> // for formatting like setprecision 
+#include <vector> // to store transcation history 
+#include <ctime> // to get data and time 
+
 
 using namespace std;
 
@@ -17,7 +17,7 @@ using namespace std;
 #define MAGENTA "\033[35m"
 #define RED     "\033[31m"
 
-struct Transaction {
+struct Transaction {  //structure stores one transcation and i
     string type;
     double amount;
     string timestamp;
@@ -31,13 +31,16 @@ void printMainHeader() {
     cout << "╚════════════════════════════════════════════╝\n";
     cout << RESET;
 }
-
+// // Calculate how many blocks of the progress bar should be filled
+// The progress bar has 20 blocks, and 100% / 20 = 5% per block
+// So we divide the percentage by 5 to know how many blocks to fill
+// static_cast<int> converts the result into an integer (whole number)
 void printProgressBar(double current, double goal) {
     if (goal <= 0) return;
     double percentage = (current / goal) * 100;
     int filled = static_cast<int>(percentage / 5);
     cout << GREEN;
-    cout << "  [";
+    cout << "  ["; //start of the test bar in gree color
     for (int i = 0; i < 20; i++) {
         if (i < filled) cout << "█";
         else cout << "░";
@@ -46,9 +49,9 @@ void printProgressBar(double current, double goal) {
 }
 
 string getCurrentTimestamp() {
-    time_t now = time(0);
-    struct tm* timeinfo = localtime(&now);
-    char buffer[80];
+    time_t now = time(0); //it gets the cuurent time from the system clock
+    struct tm* timeinfo = localtime(&now); //localtime() converts the seconds into human-readable time components based on your system's local timezone.
+    char buffer[80]; //This creates a temporary storage space to hold the formatted time string.
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
     return string(buffer);
 }
