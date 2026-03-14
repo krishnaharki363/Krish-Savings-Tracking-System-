@@ -107,10 +107,10 @@ public:
         cout << CYAN << "Enter amount to deposit (NPR): " << RESET;
         cin >> amount;
         if (amount > 0) {
-            currentSavings += amount;
-            transactionHistory.push_back({"Deposit", amount, getCurrentTimestamp()});
+            currentSavings += amount; //push_back adds an item to a vector (list,k8p)
+            transactionHistory.push_back({"Deposit", amount, getCurrentTimestamp()}); //adds a new record to the transaction history 
             cout << GREEN << BOLD << "✓ Deposit successful!\n";
-            cout << "Current balance: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
+            cout << "Current balance: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n"; //setprecision(2) set a number a after decimal 
         } else {
             cout << RED << BOLD << "❌ Invalid amount. Must be positive.\n" << RESET << "\n";
         }
@@ -186,8 +186,8 @@ public:
             return;
         }
         cout << CYAN << BOLD << left << setw(15) << "Type" << setw(15) << "Amount (NPR)" << "Date & Time" << RESET << "\n";
-        cout << string(50, '-') << "\n";
-        for (const auto& trans : transactionHistory) {
+        cout << string(50, '-') << "\n"; // This creates a line of 50 dash characters 
+        for (const auto& trans : transactionHistory) { //it goes through every transaction stored in transcationhistory vector.
             if (trans.type == "Deposit") {
                 cout << GREEN;
             } else {
@@ -237,14 +237,14 @@ public:
     }
 
     void saveData() {
-        ofstream outFile("users/" + userName + "_account.txt");
-        if (outFile.is_open()) {
+        ofstream outFile("users/" + userName + "_account.txt"); //ofstream is used for writing data to a file
+        if (outFile.is_open()) { //outfile means output file system and this checks the file opened correctly 
             outFile << userName << "\n";
             outFile << fixed << setprecision(2) << savingsGoal << "\n";
             outFile << fixed << setprecision(2) << currentSavings << "\n";
             outFile << goalDeadline << "\n";
             outFile << transactionHistory.size() << "\n";
-            for (const auto& trans : transactionHistory) {
+            for (const auto& trans : transactionHistory) { // this loop goes through all transactions stored in the vector
                 outFile << trans.type << "|" << fixed << setprecision(2) << trans.amount << "|" << trans.timestamp << "\n";
             }
             outFile.close();
@@ -256,7 +256,7 @@ public:
 
     void loadData() {
         ifstream inFile("users/" + userName + "_account.txt");
-        if (inFile.is_open()) {
+        if (inFile.is_open()) { //infile means input file
             string storedName;
             getline(inFile, storedName);
             userName = storedName;
