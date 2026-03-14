@@ -256,27 +256,27 @@ public:
 
     void loadData() {
         ifstream inFile("users/" + userName + "_account.txt");
-        if (inFile.is_open()) { //infile means input file
+        if (inFile.is_open()) { //infile means input file and it checks if the file exits and opened successdfully.
             string storedName;
             getline(inFile, storedName);
-            userName = storedName;
-            inFile >> savingsGoal;
+            userName = storedName; //reads username from the file
+            inFile >> savingsGoal; // reads saving goal and current savings
             inFile >> currentSavings;
-            inFile.ignore();
+            inFile.ignore(); //it removes leftover newline so getline() works properly 
             getline(inFile, goalDeadline);
             int transCount;
             inFile >> transCount;
             inFile.ignore();
-            transactionHistory.clear();
-            for (int i = 0; i < transCount; i++) {
+            transactionHistory.clear(); //removes old transactions from memory before loading new ones
+            for (int i = 0; i < transCount; i++) { // reads each transcation from the file
                 string line;
                 getline(inFile, line);
-                int pos1 = line.find('|');
+                int pos1 = line.find('|'); // | it is used to separate data fields. 
                 int pos2 = line.find('|', pos1 + 1);
                 string type = line.substr(0, pos1);
-                double amount = stod(line.substr(pos1 + 1, pos2 - pos1 - 1));
+                double amount = stod(line.substr(pos1 + 1, pos2 - pos1 - 1)); // stod() converts string into double 
                 string timestamp = line.substr(pos2 + 1);
-                transactionHistory.push_back({type, amount, timestamp});
+                transactionHistory.push_back({type, amount, timestamp}); //adds transaction to the transaction history list
             }
             inFile.close();
         }
@@ -286,7 +286,7 @@ public:
 class User {
 private:
     string username;
-    string password;
+    string password; 
 
 public:
     User(string u, string p) : username(u), password(p) {}
@@ -299,22 +299,22 @@ public:
         return password;
     }
 
-    void saveCredentials() {
-        ofstream userFile("users/users_list.txt", ios::app);
-        if (userFile.is_open()) {
-            userFile << username << "|" << password << "\n";
-            userFile.close();
+    void saveCredentials() { //ofstream → writes to file
+        ofstream userFile("users/users_list.txt", ios::app); // all users are stored & ios::app → append mode (adds new data)
+        if (userFile.is_open()) { // this checks whether the file is opened successfully
+            userFile << username << "|" << password << "\n"; // it writes the username and password to the file 
+            userFile.close(); // this closes file after writing and ensures the data is properly saved. 
         }
     }
 
-    static bool userExists(string u) {
-        ifstream userFile("users/users_list.txt");
-        if (userFile.is_open()) {
+    static bool userExists(string u) { // bool: the function retuns true or false  and string u checks the username
+        ifstream userFile("users/users_list.txt"); // static  function belongs to the class and can be used without creating an object 
+        if (userFile.is_open()) { // checks the file opened successfully before reading 
             string line;
-            while (getline(userFile, line)) {
+            while (getline(userFile, line)) { //reads the file line by line 
                 int pos = line.find('|');
                 string storedUsername = line.substr(0, pos);
-                if (storedUsername == u) {
+                if (storedUsername == u) { // u=user
                     userFile.close();
                     return true;
                 }
@@ -323,15 +323,15 @@ public:
         }
         return false;
     }
-
+    // checking the entered username and password are correct or incorrect 
     static bool verifyCredentials(string u, string p) {
         ifstream userFile("users/users_list.txt");
         if (userFile.is_open()) {
-            string line;
-            while (getline(userFile, line)) {
+            string line; // this varibale temporarily stores each line from the file 
+            while (getline(userFile, line)) { // getline() reads the file and loop continue until the end of the file 
                 int pos = line.find('|');
-                string storedUsername = line.substr(0, pos);
-                string storedPassword = line.substr(pos + 1);
+                string storedUsername = line.substr(0, pos); // this extracts character from index 0 to position of |
+                string storedPassword = line.substr(pos + 1); // this extracts every after the | symbol
                 if (storedUsername == u && storedPassword == p) {
                     userFile.close();
                     return true;
