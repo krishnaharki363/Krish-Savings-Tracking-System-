@@ -3,10 +3,11 @@
 #include <string>
 #include <iomanip>
 #include <vector>
+#include <ctime>
+#include <sstream>
 
 using namespace std;
 
-// ANSI Color Codes
 #define RESET   "\033[0m"
 #define BOLD    "\033[1m"
 #define GREEN   "\033[32m"
@@ -16,7 +17,12 @@ using namespace std;
 #define MAGENTA "\033[35m"
 #define RED     "\033[31m"
 
-// Helper function to print header
+struct Transaction {
+    string type;
+    double amount;
+    string timestamp;
+};
+
 void printMainHeader() {
     cout << CYAN << BOLD;
     cout << "\n╔════════════════════════════════════════════╗\n";
@@ -26,7 +32,6 @@ void printMainHeader() {
     cout << RESET;
 }
 
-// Helper function for progress bar
 void printProgressBar(double current, double goal) {
     if (goal <= 0) return;
     double percentage = (current / goal) * 100;
@@ -40,16 +45,23 @@ void printProgressBar(double current, double goal) {
     cout << "] " << YELLOW << fixed << setprecision(1) << percentage << "%" << RESET << "\n";
 }
 
+string getCurrentTimestamp() {
+    time_t now = time(0);
+    struct tm* timeinfo = localtime(&now);
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+    return string(buffer);
+}
+
 class SavingsTracker {
 private:
     string userName;
     double savingsGoal;
     double currentSavings;
-    string goalDeadline; // optional
-    vector<pair<string, double>> withdrawalHistory; // track withdrawals
+    string goalDeadline;
+    vector<Transaction> transactionHistory;
 
 public:
-    // Default constructor
     SavingsTracker() {
         userName = "Unknown";
         savingsGoal = 0.0;
@@ -57,7 +69,6 @@ public:
         goalDeadline = "N/A";
     }
 
-    // Parameterized constructor
     SavingsTracker(string name, double goal, string deadline = "N/A") {
         userName = name;
         savingsGoal = goal;
@@ -65,69 +76,57 @@ public:
         goalDeadline = deadline;
     }
 
-    // Set savings goal
+    string getUserName() const {
+        return userName;
+    }
+
     void setGoal() {
         cout << "\n" << BLUE << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
         cout << "│       ⚙️  SET SAVINGS GOAL ⚙️          │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
-        cout << CYAN << "Enter your name: " << RESET;
-        cin.ignore();
-        getline(cin, userName);
-        
         cout << YELLOW << "Enter your savings goal amount (NPR): " << RESET;
         cin >> savingsGoal;
         cin.ignore();
-        
         cout << MAGENTA << "Enter your goal deadline (optional): " << RESET;
         getline(cin, goalDeadline);
-        
-        currentSavings = 0.0;
-        withdrawalHistory.clear();
-        
         cout << GREEN << BOLD << "\n✓ Goal set successfully!\n" << RESET << "\n";
     }
 
-    // Add savings
-    void addSavings() {
+    void deposit() {
         double amount;
         cout << "\n" << GREEN << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
-        cout << "│       ➕ ADD SAVINGS ➕               │\n";
+        cout << "│       💵 DEPOSIT MONEY 💵              │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
-        cout << CYAN << "Enter amount to add (NPR): " << RESET;
+        cout << CYAN << "Enter amount to deposit (NPR): " << RESET;
         cin >> amount;
-        
         if (amount > 0) {
             currentSavings += amount;
-            cout << GREEN << BOLD << "✓ Amount added successfully!\n";
-            cout << "Current savings: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
+            transactionHistory.push_back({"Deposit", amount, getCurrentTimestamp()});
+            cout << GREEN << BOLD << "✓ Deposit successful!\n";
+            cout << "Current balance: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
         } else {
             cout << RED << BOLD << "❌ Invalid amount. Must be positive.\n" << RESET << "\n";
         }
     }
 
-    // Withdraw savings
-    void withdrawSavings() {
+    void withdraw() {
         double amount;
         cout << "\n" << YELLOW << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
-        cout << "│      🏦 WITHDRAW SAVINGS 🏦            │\n";
+        cout << "│      🏦 WITHDRAW MONEY 🏦             │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
         cout << CYAN << "Enter amount to withdraw (NPR): " << RESET;
         cin >> amount;
-        
         if (amount > 0 && amount <= currentSavings) {
             currentSavings -= amount;
-            withdrawalHistory.push_back({"Withdrawal", amount});
+            transactionHistory.push_back({"Withdrawal", amount, getCurrentTimestamp()});
             cout << GREEN << BOLD << "✓ Withdrawal successful!\n";
-            cout << "Remaining savings: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
+            cout << "Remaining balance: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
         } else if (amount > currentSavings) {
             cout << RED << BOLD << "❌ Error: Insufficient funds.\n";
             cout << "Current balance: NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
@@ -136,21 +135,26 @@ public:
         }
     }
 
-    // Show progress
+    void checkBalance() {
+        cout << "\n" << BLUE << BOLD;
+        cout << "┌─────────────────────────────────────────┐\n";
+        cout << "│       💳 ACCOUNT BALANCE 💳            │\n";
+        cout << "└─────────────────────────────────────────┘\n";
+        cout << RESET;
+        cout << CYAN << "Current balance: " << BOLD << "NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n\n";
+    }
+
     void showProgress() {
         cout << "\n" << BLUE << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
         cout << "│       📊 SAVINGS PROGRESS REPORT 📊     │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
         cout << CYAN << "  User: " << BOLD << userName << RESET << "\n";
         cout << YELLOW << "  Goal: " << BOLD << "NPR " << fixed << setprecision(2) << savingsGoal << RESET << "\n";
         cout << GREEN << "  Saved: " << BOLD << "NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n";
-        
         cout << "\n" << MAGENTA << "  Progress:\n" << RESET;
         printProgressBar(currentSavings, savingsGoal);
-        
         if (savingsGoal > 0) {
             if (currentSavings >= savingsGoal) {
                 cout << "\n" << GREEN << BOLD;
@@ -162,28 +166,46 @@ public:
                 cout << "\n" << CYAN << "  Remaining: " << BOLD << RED << "NPR " << fixed << setprecision(2) << remaining << RESET << "\n";
             }
         }
-        
         if (goalDeadline != "N/A") {
             cout << YELLOW << "  Deadline: " << BOLD << goalDeadline << RESET << "\n";
         }
         cout << "\n";
     }
 
-    // Check if goal is achieved
+    void showTransactionHistory() {
+        cout << "\n" << MAGENTA << BOLD;
+        cout << "┌─────────────────────────────────────────┐\n";
+        cout << "│      📋 TRANSACTION HISTORY 📋         │\n";
+        cout << "└─────────────────────────────────────────┘\n";
+        cout << RESET;
+        if (transactionHistory.empty()) {
+            cout << YELLOW << "No transactions yet.\n" << RESET << "\n";
+            return;
+        }
+        cout << CYAN << BOLD << left << setw(15) << "Type" << setw(15) << "Amount (NPR)" << "Date & Time" << RESET << "\n";
+        cout << string(50, '-') << "\n";
+        for (const auto& trans : transactionHistory) {
+            if (trans.type == "Deposit") {
+                cout << GREEN;
+            } else {
+                cout << YELLOW;
+            }
+            cout << left << setw(15) << trans.type << setw(15) << fixed << setprecision(2) << trans.amount << trans.timestamp << RESET << "\n";
+        }
+        cout << "\n";
+    }
+
     void checkGoalStatus() {
         cout << "\n" << MAGENTA << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
         cout << "│         📋 GOAL STATUS 📋             │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
         if (savingsGoal <= 0) {
             cout << YELLOW << "Please set a savings goal first.\n" << RESET << "\n";
             return;
         }
-        
         cout << CYAN << "Name: " << BOLD << userName << RESET << "\n";
-        
         if (currentSavings >= savingsGoal) {
             cout << GREEN << BOLD;
             cout << "Status: ✓ GOAL ACHIEVED!\n";
@@ -197,67 +219,30 @@ public:
             cout << RED << "Still need: " << BOLD << "NPR " << fixed << setprecision(2) << remaining << RESET << "\n\n";
         }
     }
-    
-    // Show all data
+
     void showAllData() {
         cout << "\n" << BLUE << BOLD;
         cout << "┌─────────────────────────────────────────┐\n";
         cout << "│       📁 ALL ACCOUNT DATA 📁           │\n";
         cout << "└─────────────────────────────────────────┘\n";
         cout << RESET;
-        
         cout << CYAN << "User Name: " << BOLD << userName << RESET << "\n";
         cout << YELLOW << "Savings Goal: " << BOLD << "NPR " << fixed << setprecision(2) << savingsGoal << RESET << "\n";
-        cout << GREEN << "Current Savings: " << BOLD << "NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n";
+        cout << GREEN << "Current Balance: " << BOLD << "NPR " << fixed << setprecision(2) << currentSavings << RESET << "\n";
         cout << MAGENTA << "Goal Deadline: " << BOLD << goalDeadline << RESET << "\n";
-        
-        if (withdrawalHistory.empty()) {
-            cout << YELLOW << "\nNo withdrawal history.\n" << RESET << "\n";
-        } else {
-            cout << "\n" << CYAN << BOLD << "Withdrawal History:\n" << RESET;
-            for (int i = 0; i < withdrawalHistory.size(); i++) {
-                cout << "  " << (i + 1) << ". " << YELLOW << withdrawalHistory[i].first << ": " << RED 
-                     << "NPR " << fixed << setprecision(2) << withdrawalHistory[i].second << RESET << "\n";
-            }
-            cout << "\n";
-        }
-    }
-    
-    // Withdrawal analysis
-    void withdrawalAnalysis() {
-        cout << "\n" << MAGENTA << BOLD;
-        cout << "┌─────────────────────────────────────────┐\n";
-        cout << "│    📊 WITHDRAWAL ANALYSIS 📊           │\n";
-        cout << "└─────────────────────────────────────────┘\n";
-        cout << RESET;
-        
-        if (withdrawalHistory.empty()) {
-            cout << YELLOW << "No withdrawals made yet.\n" << RESET << "\n";
-            return;
-        }
-        
-        double totalWithdrawn = 0;
-        for (auto& entry : withdrawalHistory) {
-            totalWithdrawn += entry.second;
-        }
-        
-        cout << CYAN << "Total withdrawals: " << BOLD << withdrawalHistory.size() << RESET << "\n";
-        cout << YELLOW << "Total amount withdrawn: " << BOLD << "NPR " << fixed << setprecision(2) << totalWithdrawn << RESET << "\n";
-        cout << GREEN << "Average withdrawal: " << BOLD << "NPR " << fixed << setprecision(2) << (totalWithdrawn / withdrawalHistory.size()) << RESET << "\n\n";
+        showTransactionHistory();
     }
 
-    // Optional: Save data to file
     void saveData() {
-        ofstream outFile("savings_data.txt");
+        ofstream outFile("users/" + userName + "_account.txt");
         if (outFile.is_open()) {
             outFile << userName << "\n";
-            outFile << savingsGoal << "\n";
-            outFile << currentSavings << "\n";
+            outFile << fixed << setprecision(2) << savingsGoal << "\n";
+            outFile << fixed << setprecision(2) << currentSavings << "\n";
             outFile << goalDeadline << "\n";
-            // Save withdrawal history
-            outFile << withdrawalHistory.size() << "\n";
-            for (auto& entry : withdrawalHistory) {
-                outFile << entry.first << "," << entry.second << "\n";
+            outFile << transactionHistory.size() << "\n";
+            for (const auto& trans : transactionHistory) {
+                outFile << trans.type << "|" << fixed << setprecision(2) << trans.amount << "|" << trans.timestamp << "\n";
             }
             outFile.close();
             cout << GREEN << BOLD << "✓ Data saved successfully.\n" << RESET << "\n";
@@ -266,111 +251,261 @@ public:
         }
     }
 
-    // Optional: Load data from file
     void loadData() {
-        ifstream inFile("savings_data.txt");
+        ifstream inFile("users/" + userName + "_account.txt");
         if (inFile.is_open()) {
-            getline(inFile, userName);
+            string storedName;
+            getline(inFile, storedName);
+            userName = storedName;
             inFile >> savingsGoal;
             inFile >> currentSavings;
             inFile.ignore();
             getline(inFile, goalDeadline);
-            
-            int historyCount;
-            inFile >> historyCount;
+            int transCount;
+            inFile >> transCount;
             inFile.ignore();
-            
-            withdrawalHistory.clear();
-            for (int i = 0; i < historyCount; i++) {
+            transactionHistory.clear();
+            for (int i = 0; i < transCount; i++) {
                 string line;
                 getline(inFile, line);
-                int commaPos = line.find(',');
-                string type = line.substr(0, commaPos);
-                double amount = stod(line.substr(commaPos + 1));
-                withdrawalHistory.push_back({type, amount});
+                int pos1 = line.find('|');
+                int pos2 = line.find('|', pos1 + 1);
+                string type = line.substr(0, pos1);
+                double amount = stod(line.substr(pos1 + 1, pos2 - pos1 - 1));
+                string timestamp = line.substr(pos2 + 1);
+                transactionHistory.push_back({type, amount, timestamp});
             }
-            
             inFile.close();
-            cout << GREEN << BOLD << "✓ Data loaded successfully.\n" << RESET << "\n";
-        } else {
-            cout << YELLOW << "⚠️ No saved data found.\n" << RESET << "\n";
         }
     }
 };
 
-// Menu-driven system
+class User {
+private:
+    string username;
+    string password;
+
+public:
+    User(string u, string p) : username(u), password(p) {}
+
+    string getUsername() const {
+        return username;
+    }
+
+    string getPassword() const {
+        return password;
+    }
+
+    void saveCredentials() {
+        ofstream userFile("users/users_list.txt", ios::app);
+        if (userFile.is_open()) {
+            userFile << username << "|" << password << "\n";
+            userFile.close();
+        }
+    }
+
+    static bool userExists(string u) {
+        ifstream userFile("users/users_list.txt");
+        if (userFile.is_open()) {
+            string line;
+            while (getline(userFile, line)) {
+                int pos = line.find('|');
+                string storedUsername = line.substr(0, pos);
+                if (storedUsername == u) {
+                    userFile.close();
+                    return true;
+                }
+            }
+            userFile.close();
+        }
+        return false;
+    }
+
+    static bool verifyCredentials(string u, string p) {
+        ifstream userFile("users/users_list.txt");
+        if (userFile.is_open()) {
+            string line;
+            while (getline(userFile, line)) {
+                int pos = line.find('|');
+                string storedUsername = line.substr(0, pos);
+                string storedPassword = line.substr(pos + 1);
+                if (storedUsername == u && storedPassword == p) {
+                    userFile.close();
+                    return true;
+                }
+            }
+            userFile.close();
+        }
+        return false;
+    }
+};
+
+void registerUser() {
+    cout << "\n" << GREEN << BOLD;
+    cout << "┌─────────────────────────────────────────┐\n";
+    cout << "│          📝 USER REGISTRATION 📝       │\n";
+    cout << "└─────────────────────────────────────────┘\n";
+    cout << RESET;
+
+    string username, password;
+    cout << CYAN << "Enter username: " << RESET;
+    cin >> username;
+
+    if (User::userExists(username)) {
+        cout << RED << BOLD << "❌ Username already exists!\n" << RESET << "\n";
+        return;
+    }
+
+    cout << CYAN << "Enter password: " << RESET;
+    cin >> password;
+
+    if (password.length() < 3) {
+        cout << RED << BOLD << "❌ Password must be at least 3 characters!\n" << RESET << "\n";
+        return;
+    }
+
+    User newUser(username, password);
+    newUser.saveCredentials();
+    cout << GREEN << BOLD << "✓ Account created successfully!\n" << RESET << "\n";
+}
+
+SavingsTracker* loginUser() {
+    cout << "\n" << BLUE << BOLD;
+    cout << "┌─────────────────────────────────────────┐\n";
+    cout << "║          🔐 USER LOGIN 🔐             ║\n";
+    cout << "└─────────────────────────────────────────┘\n";
+    cout << RESET;
+
+    string username, password;
+    cout << CYAN << "Enter username: " << RESET;
+    cin >> username;
+
+    cout << CYAN << "Enter password: " << RESET;
+    cin >> password;
+
+    if (!User::verifyCredentials(username, password)) {
+        cout << RED << BOLD << "❌ Invalid credentials!\n" << RESET << "\n";
+        return nullptr;
+    }
+
+    cout << GREEN << BOLD << "✓ Login successful!\n" << RESET << "\n";
+
+    SavingsTracker* tracker = new SavingsTracker(username, 0.0);
+    tracker->loadData();
+    return tracker;
+}
+
 void showMenu() {
     cout << "\n" << BOLD << YELLOW;
     cout << "╔════════════════════════════════════════════╗\n";
-    cout << "║              MAIN MENU                    ║\n";
+    cout << "║              ACCOUNT MENU                 ║\n";
     cout << "╚════════════════════════════════════════════╝\n";
     cout << RESET;
-    
+
     cout << CYAN << "  " << BOLD << "1" << RESET << CYAN << " - Set Savings Goal\n";
-    cout << GREEN << "  " << BOLD << "2" << RESET << GREEN << " - Add Savings\n";
-    cout << YELLOW << "  " << BOLD << "3" << RESET << YELLOW << " - Withdraw Savings\n";
-    cout << BLUE << "  " << BOLD << "4" << RESET << BLUE << " - Show Savings Progress\n";
-    cout << MAGENTA << "  " << BOLD << "5" << RESET << MAGENTA << " - Check Goal Status\n";
-    cout << CYAN << "  " << BOLD << "6" << RESET << CYAN << " - Show All Data\n";
-    cout << GREEN << "  " << BOLD << "7" << RESET << GREEN << " - Withdrawal Analysis\n";
-    cout << YELLOW << "  " << BOLD << "8" << RESET << YELLOW << " - Save Data\n";
-    cout << BLUE << "  " << BOLD << "9" << RESET << BLUE << " - Load Data\n";
-    cout << RED << "  " << BOLD << "0" << RESET << RED << " - Exit\n";
-    
+    cout << GREEN << "  " << BOLD << "2" << RESET << GREEN << " - Deposit Money\n";
+    cout << YELLOW << "  " << BOLD << "3" << RESET << YELLOW << " - Withdraw Money\n";
+    cout << BLUE << "  " << BOLD << "4" << RESET << BLUE << " - Check Balance\n";
+    cout << MAGENTA << "  " << BOLD << "5" << RESET << MAGENTA << " - Show Progress\n";
+    cout << CYAN << "  " << BOLD << "6" << RESET << CYAN << " - View Transaction History\n";
+    cout << GREEN << "  " << BOLD << "7" << RESET << GREEN << " - Check Goal Status\n";
+    cout << YELLOW << "  " << BOLD << "8" << RESET << YELLOW << " - Show All Data\n";
+    cout << BLUE << "  " << BOLD << "9" << RESET << BLUE << " - Save Data\n";
+    cout << RED << "  " << BOLD << "0" << RESET << RED << " - Logout\n";
+
     cout << "\n" << BOLD << CYAN << "Enter your choice (0-9): " << RESET;
 }
 
+void showMainMenu() {
+    cout << "\n" << BOLD << YELLOW;
+    cout << "╔════════════════════════════════════════════╗\n";
+    cout << "║             MAIN MENU                     ║\n";
+    cout << "╚════════════════════════════════════════════╝\n";
+    cout << RESET;
+
+    cout << GREEN << "  " << BOLD << "1" << RESET << GREEN << " - Login\n";
+    cout << CYAN << "  " << BOLD << "2" << RESET << CYAN << " - Register\n";
+    cout << RED << "  " << BOLD << "0" << RESET << RED << " - Exit\n";
+
+    cout << "\n" << BOLD << CYAN << "Enter your choice: " << RESET;
+}
+
 int main() {
-    SavingsTracker tracker;
-    int choice;
-    
     printMainHeader();
+    int mainChoice;
+    SavingsTracker* currentUser = nullptr;
 
     do {
-        showMenu();
-        cin >> choice;
+        showMainMenu();
+        cin >> mainChoice;
 
-        switch (choice) {
-        case 1:
-            tracker.setGoal();
-            break;
-        case 2:
-            tracker.addSavings();
-            break;
-        case 3:
-            tracker.withdrawSavings();
-            break;
-        case 4:
-            tracker.showProgress();
-            break;
-        case 5:
-            tracker.checkGoalStatus();
-            break;
-        case 6:
-            tracker.showAllData();
-            break;
-        case 7:
-            tracker.withdrawalAnalysis();
-            break;
-        case 8:
-            tracker.saveData();
-            break;
-        case 9:
-            tracker.loadData();
-            break;
-        case 0:
+        if (mainChoice == 1) {
+            currentUser = loginUser();
+            if (currentUser != nullptr) {
+                int choice;
+                do {
+                    showMenu();
+                    cin >> choice;
+
+                    switch (choice) {
+                    case 1:
+                        currentUser->setGoal();
+                        break;
+                    case 2:
+                        currentUser->deposit();
+                        break;
+                    case 3:
+                        currentUser->withdraw();
+                        break;
+                    case 4:
+                        currentUser->checkBalance();
+                        break;
+                    case 5:
+                        currentUser->showProgress();
+                        break;
+                    case 6:
+                        currentUser->showTransactionHistory();
+                        break;
+                    case 7:
+                        currentUser->checkGoalStatus();
+                        break;
+                    case 8:
+                        currentUser->showAllData();
+                        break;
+                    case 9:
+                        currentUser->saveData();
+                        break;
+                    case 0:
+                        currentUser->saveData();
+                        cout << "\n" << CYAN << BOLD;
+                        cout << "╔════════════════════════════════════════════╗\n";
+                        cout << "║         Thank you for using the app!      ║\n";
+                        cout << "║            Logout successful! 👋          ║\n";
+                        cout << "╚════════════════════════════════════════════╝\n";
+                        cout << RESET << "\n";
+                        break;
+                    default:
+                        cout << "\n" << RED << BOLD << "❌ Invalid choice. Please enter 0-9.\n" << RESET << "\n";
+                    }
+                } while (choice != 0);
+
+                delete currentUser;
+                currentUser = nullptr;
+            }
+        } else if (mainChoice == 2) {
+            registerUser();
+        } else if (mainChoice == 0) {
             cout << "\n" << GREEN << BOLD;
             cout << "╔════════════════════════════════════════════╗\n";
             cout << "║  Thank you for using Savings Tracker!     ║\n";
             cout << "║     Keep saving, keep growing! 📈         ║\n";
             cout << "╚════════════════════════════════════════════╝\n";
             cout << RESET << "\n";
-            break;
-        default:
-            cout << "\n" << RED << BOLD << "❌ Invalid choice. Please enter 0-9.\n" << RESET << "\n";
+        } else {
+            cout << "\n" << RED << BOLD << "❌ Invalid choice. Please try again.\n" << RESET << "\n";
         }
-
-    } while (choice != 0);
+    } while (mainChoice != 0);
 
     return 0;
 }
+
