@@ -18,7 +18,7 @@ using namespace std;
 #define RED     "\033[31m"
 
 struct Transaction {  //structure stores one transcation and i
-    string type;
+    string type;  // We have string type that is deposit and withdraw 
     double amount;
     string timestamp;
 };
